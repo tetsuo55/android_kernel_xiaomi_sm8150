@@ -721,6 +721,7 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	int rc = 0;
 	u32 bl_temp = 0;
 	struct mipi_dsi_device *dsi;
+	size_t num_params;
 
 	if (!panel || (bl_lvl > 0xffff)) {
 		pr_err("invalid params\n");
@@ -741,10 +742,11 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	pr_debug("bl_temp %d\n", bl_temp);
 	dsi = &panel->mipi_device;
 
+	num_params = panel->bl_config.bl_max_level > 0xFF ? 2 : 1;
 	if (panel->bl_config.dcs_type_ss)
 		rc = mipi_dsi_dcs_set_display_brightness_ss(dsi, bl_temp);
 	else
-		rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_temp);
+	        rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl, num_params);
 
 	/* For the f4_41 panel, we need to switch the DEMURA_LEVEL according to the value of the 51 register. */
 	if (panel->bl_config.xiaomi_f4_41_flag)
