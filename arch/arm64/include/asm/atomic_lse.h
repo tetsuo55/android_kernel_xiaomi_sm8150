@@ -446,14 +446,14 @@ static inline long atomic64_dec_if_positive(atomic64_t *v)
 
 #define __LL_SC_CMPXCHG(op)	__LL_SC_CALL(__cmpxchg_case_##op)
 
-#define __CMPXCHG_CASE(w, sz, name, mb, cl...)				\
-static inline unsigned long __cmpxchg_case_##name(volatile void *ptr,	\
-						  unsigned long old,	\
-						  unsigned long new)	\
+#define __CMPXCHG_CASE(w, sfx, name, sz, mb, cl...)			\
+static inline u##sz __cmpxchg_case_##name##sz(volatile void *ptr,	\
+					      u##sz old,		\
+					      u##sz new)		\
 {									\
 	register unsigned long x0 asm ("x0") = (unsigned long)ptr;	\
-	register unsigned long x1 asm ("x1") = old;			\
-	register unsigned long x2 asm ("x2") = new;			\
+	register u##sz x1 asm ("x1") = old;				\
+	register u##sz x2 asm ("x2") = new;				\
 									\
 	asm volatile(ARM64_LSE_ATOMIC_INSN(				\
 	/* LL/SC */							\
