@@ -7352,6 +7352,7 @@ struct find_best_target_env {
 	bool is_rtg;
 	int placement_boost;
 	bool need_idle;
+	bool boosted;
 	int fastpath;
 	int skip_cpu;
 	int start_cpu;
@@ -7438,7 +7439,7 @@ enum fastpaths {
 };
 
 static inline int find_best_target(struct task_struct *p, int *backup_cpu,
-				   bool boosted, bool prefer_idle,
+				   bool prefer_idle,
 				   struct find_best_target_env *fbt_env)
 {
 	unsigned long min_util = boosted_task_util(p);
@@ -7461,6 +7462,7 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 	bool next_group_higher_cap = false;
 	int isolated_candidate = -1;
 	int mid_cap_orig_cpu = cpu_rq(smp_processor_id())->rd->mid_cap_orig_cpu;
+	bool boosted = fbt_env->boosted;
 
 	*backup_cpu = -1;
 
@@ -8193,12 +8195,13 @@ static int find_energy_efficient_cpu(struct sched_domain *sd,
 		fbt_env.placement_boost = placement_boost;
 		fbt_env.need_idle = need_idle;
 		fbt_env.start_cpu = start_cpu;
+		fbt_env.boosted = boosted;
 		fbt_env.skip_cpu = is_many_wakeup(sibling_count_hint) ?
 				   cpu : -1;
 
 		/* Find a cpu with sufficient capacity */
 		target_cpu = find_best_target(p, &eenv->cpu[EAS_CPU_BKP].cpu_id,
-					      boosted, prefer_idle, &fbt_env);
+					      prefer_idle, &fbt_env);
 		if (target_cpu < 0)
 			goto out;
 
