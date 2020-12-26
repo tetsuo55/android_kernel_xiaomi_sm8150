@@ -5078,7 +5078,7 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 
 		qos->type = PM_QOS_REQ_AFFINE_CORES;
 		
-        atomic_set(&qos->cpus_affine, device->pwrctrl.l2pc_cpus_mask);
+                atomic_set(&qos->cpus_affine, device->pwrctrl.l2pc_cpus_mask);
 		pm_qos_add_request(&device->pwrctrl.l2pc_cpus_qos,
 				PM_QOS_CPU_DMA_LATENCY,
 				PM_QOS_DEFAULT_VALUE);
