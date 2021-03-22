@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1841,7 +1841,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t mode = 0;
 	uint8_t enable_roam_reason_vsie = 0;
-	struct wma_txrx_node *intr = NULL;
 	struct wmi_bss_load_config *bss_load_cfg;
 
 	if (!mac) {
@@ -1858,8 +1857,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	wma_handle->interfaces[roam_req->sessionId].roaming_in_progress = false;
 	switch (roam_req->Command) {
 	case ROAM_SCAN_OFFLOAD_START:
-		intr = &wma_handle->interfaces[roam_req->sessionId];
-		intr->delay_before_vdev_stop = roam_req->delay_before_vdev_stop;
 		/*
 		 * Scan/Roam threshold parameters are translated from
 		 * fields of struct roam_offload_scan_req to WMITLV
