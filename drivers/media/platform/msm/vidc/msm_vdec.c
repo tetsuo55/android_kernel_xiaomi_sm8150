@@ -30,7 +30,7 @@
 #define OPERATING_FRAME_RATE_STEP (1 << 16)
 #define MAX_VP9D_INST_COUNT 6
 #define MAX_4K_MBPF 38736 /* (4096 * 2304 / 256) */
-#define NUM_MBS_720P (((1280 + 15) >> 4) * ((720 + 15) >> 4))
+#define NUM_MBS_720P (((1280 + 15) W>> 4) * ((720 + 15) >> 4))
 #define MAX_5k_MBPF 64800 /*(5760 * 2880 / 256) */
 
 static const char *const mpeg_video_stream_format[] = {
