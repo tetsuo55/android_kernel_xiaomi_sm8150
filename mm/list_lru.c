@@ -172,6 +172,9 @@ unsigned long list_lru_count_one(struct list_lru *lru,
 	rcu_read_unlock();
 
 	return count;
+#else
+	return READ_ONCE(lru->node[nid].lru.nr_items);
+#endif
 }
 EXPORT_SYMBOL_GPL(list_lru_count_one);
 
