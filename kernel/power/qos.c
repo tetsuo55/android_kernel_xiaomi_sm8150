@@ -270,14 +270,15 @@ static const struct file_operations pm_qos_debug_fops = {
 
 static inline int pm_qos_set_value_for_cpus(struct pm_qos_request *new_req,
 					    struct pm_qos_constraints *c,
-					    unsigned long *cpus)
+					    unsigned long *cpus,
+					    unsigned long new_cpus,
+					    enum pm_qos_req_action new_action)
 {
 	s32 qos_val[NR_CPUS] = {
 		[0 ... (NR_CPUS - 1)] = PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE
 	};
 	struct pm_qos_request *req;
 	unsigned long new_req_cpus;
-	bool changed = false;
 	int cpu;
 
 	/*
@@ -288,19 +289,27 @@ static inline int pm_qos_set_value_for_cpus(struct pm_qos_request *new_req,
 	if (c != pm_qos_array[PM_QOS_CPU_DMA_LATENCY]->constraints)
 		return -EINVAL;
 
-	new_req_cpus = atomic_read(&new_req->cpus_affine);
-	for_each_cpu(cpu, to_cpumask(&new_req_cpus)) {
-		if (c->target_per_cpu[cpu] != new_req->node.prio) {
-			changed = true;
-			break;
+	if (new_cpus) {
+		/* cpus_affine changed, so the old CPUs need to be refreshed */
+		new_req_cpus = atomic_read(&new_req->cpus_affine) | new_cpus;
+		atomic_set(&new_req->cpus_affine, new_cpus);
+	} else {
+		new_req_cpus = atomic_read(&new_req->cpus_affine);
+	}
+
+	if (new_action != PM_QOS_REMOVE_REQ) {
+		bool changed = false;
+
+		for_each_cpu(cpu, to_cpumask(&new_req_cpus)) {
+			if (c->target_per_cpu[cpu] != new_req->node.prio) {
+				changed = true;
+				break;
+			}
 		}
 
 		if (!changed)
 			return 0;
 	}
-
-	if (!changed)
-		return 0;
 
 	plist_for_each_entry(req, &c->list, node) {
 		unsigned long affected_cpus;
@@ -364,7 +373,7 @@ static int pm_qos_update_target_cpus(struct pm_qos_constraints *c,
 
 	curr_value = pm_qos_get_value(c);
 	pm_qos_set_value(c, curr_value);
-	ret = pm_qos_set_value_for_cpus(req, c, &cpus);
+	ret = pm_qos_set_value_for_cpus(req, c, &cpus, new_cpus, action);
 
 	spin_unlock(&pm_qos_lock);
 
