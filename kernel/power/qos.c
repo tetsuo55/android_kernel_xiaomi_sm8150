@@ -288,10 +288,10 @@ static inline int pm_qos_set_value_for_cpus(struct pm_qos_request *new_req,
 
 	if (new_cpus) {
 		/* cpus_affine changed, so the old CPUs need to be refreshed */
-		new_req_cpus = atomic_read(&new_req->cpus_affine) | new_cpus;
-		atomic_set(&new_req->cpus_affine, new_cpus);
+		new_req_cpus = new_req->cpus_affine | new_cpus;
+		new_req->cpus_affine = new_cpus;
 	} else {
-		new_req_cpus = atomic_read(&new_req->cpus_affine);
+		new_req_cpus = new_req->cpus_affine;
 	}
 
 	if (new_action != PM_QOS_REMOVE_REQ) {
@@ -311,7 +311,7 @@ static inline int pm_qos_set_value_for_cpus(struct pm_qos_request *new_req,
 	plist_for_each_entry(req, &c->list, node) {
 		unsigned long affected_cpus;
 
-		affected_cpus = atomic_read(&req->cpus_affine) & new_req_cpus;
+		affected_cpus = req->cpus_affine & new_req_cpus;
 		if (!affected_cpus)
 			continue;
 
