@@ -723,16 +723,6 @@ int qcom_smem_get_free_space(unsigned host)
 }
 EXPORT_SYMBOL(qcom_smem_get_free_space);
 
-static int addr_in_range(void __iomem *virt_base, unsigned int size,
-			void *addr)
-{
-	if (virt_base && addr >= virt_base &&
-			addr < virt_base + size)
-		return 1;
-
-	return 0;
-}
-
 /**
  * qcom_smem_virt_to_phys() - return the physical address associated
  * with an smem item pointer (previously returned by qcom_smem_get()
@@ -896,10 +886,7 @@ static int qcom_smem_set_global_partition(struct qcom_smem *smem)
 	if (!header)
 		return -EINVAL;
 
-	smem->global_partition_desc.virt_base = (void __iomem *)header;
-	smem->global_partition_desc.phys_base = phys_addr;
-	smem->global_partition_desc.size = le32_to_cpu(entry->size);
-	smem->global_partition_desc.cacheline = le32_to_cpu(entry->cacheline);
+	smem->global_partition_entry = entry;
 
 	return 0;
 }
@@ -907,10 +894,9 @@ static int qcom_smem_set_global_partition(struct qcom_smem *smem)
 static int
 qcom_smem_enumerate_partitions(struct qcom_smem *smem, u16 local_host)
 {
-	struct smem_partition_header __iomem *header;
+	struct smem_partition_header *header;
 	struct smem_ptable_entry *entry;
-	struct smem_ptable __iomem *ptable;
-	u32 phys_addr;
+	struct smem_ptable *ptable;
 	unsigned int remote_host;
 	u16 host0, host1;
 	int i;
@@ -949,13 +935,7 @@ qcom_smem_enumerate_partitions(struct qcom_smem *smem, u16 local_host)
 		if (!header)
 			return -EINVAL;
 
-		smem->partition_desc[remote_host].virt_base =
-						(void __iomem *)header;
-		smem->partition_desc[remote_host].phys_base = phys_addr;
-		smem->partition_desc[remote_host].size =
-						le32_to_cpu(entry->size);
-		smem->partition_desc[remote_host].cacheline =
-						le32_to_cpu(entry->cacheline);
+		smem->ptable_entries[remote_host] = entry;
 	}
 
 	return 0;
@@ -986,61 +966,6 @@ static int qcom_smem_map_memory(struct qcom_smem *smem, struct device *dev,
 		return -ENOMEM;
 	smem->regions[i].aux_base = (u32)r.start;
 	smem->regions[i].size = size;
-
-	return 0;
-}
-
-static int qcom_smem_map_toc(struct qcom_smem *smem, struct device *dev,
-				const char *name, int i)
-{
-	struct device_node *np;
-	struct resource r;
-	int ret;
-
-	np = of_parse_phandle(dev->of_node, name, 0);
-	if (!np) {
-		dev_err(dev, "No %s specified\n", name);
-		return -EINVAL;
-	}
-
-	ret = of_address_to_resource(np, 0, &r);
-	of_node_put(np);
-	if (ret)
-		return ret;
-
-	smem->regions[i].aux_base = (u32)r.start;
-	smem->regions[i].size = resource_size(&r);
-	/* map starting 4K for smem header */
-	smem->regions[i].virt_base = devm_ioremap_wc(dev, r.start, SZ_4K);
-	/* map last 4k for toc */
-	smem->ptable_base = (struct smem_ptable __iomem *)devm_ioremap_wc(dev,
-				r.start + resource_size(&r) - SZ_4K, SZ_4K);
-
-	if (!smem->regions[i].virt_base || !smem->ptable_base)
-		return -ENOMEM;
-
-	return 0;
-}
-
-static int qcom_smem_mamp_legacy(struct qcom_smem *smem)
-{
-	struct smem_header __iomem *header;
-	u32 phys_addr;
-	u32 p_size;
-
-	phys_addr = smem->regions[0].aux_base;
-	header = (struct smem_header __iomem *)smem->regions[0].virt_base;
-	p_size = readl_relaxed(&header->available);
-
-	/* unmap previously mapped starting 4k for smem header */
-	devm_iounmap(smem->dev, smem->regions[0].virt_base);
-
-	smem->regions[0].size = p_size;
-	smem->regions[0].virt_base = devm_ioremap_wc(smem->dev,
-						      phys_addr, p_size);
-
-	if (!smem->regions[0].virt_base)
-		return -ENOMEM;
 
 	return 0;
 }
