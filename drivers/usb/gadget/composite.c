@@ -2315,7 +2315,6 @@ int composite_dev_prepare(struct usb_composite_driver *composite,
 		return -ENOMEM;
 
 	cdev->req->buf = kzalloc(USB_COMP_EP0_BUFSIZ, GFP_KERNEL);
-
 	if (!cdev->req->buf)
 		goto fail;
 
