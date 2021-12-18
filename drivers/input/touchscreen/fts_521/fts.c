@@ -6121,6 +6121,16 @@ static int fts_probe(struct spi_device *client)
 #ifdef CONFIG_DRM
 	info->notifier = fts_noti_block;
 #endif
+
+	/*
+	 * This *must* be done before request_threaded_irq is called.
+	 * Otherwise, if an interrupt is received before request is added,
+	 * but after the interrupt has been subscribed to, pm_qos_req
+	 * may be accessed before initialization in the interrupt handler.
+	 */
+	pm_qos_add_request(&info->pm_qos_req, PM_QOS_CPU_DMA_LATENCY,
+			PM_QOS_DEFAULT_VALUE);
+
 	logError(0, "%s Init Core Lib: \n", tag);
 	initCore(info);
 	/* init hardware device */
@@ -6312,6 +6322,7 @@ ProbeErrorExit_7:
 #endif
 
 ProbeErrorExit_6:
+	pm_qos_remove_request(&info->pm_qos_req);
 	input_unregister_device(info->input_dev);
 
 ProbeErrorExit_5_1:
@@ -6355,9 +6366,11 @@ static int fts_remove(struct spi_device *client)
 	sysfs_remove_group(&client->dev.kobj, &info->attrs);
 	/* remove interrupt and event handlers */
 	fts_interrupt_uninstall(info);
+	
 #ifdef CONFIG_DRM
 	msm_drm_unregister_client(&info->notifier);
 #endif
+	pm_qos_remove_request(&info->pm_qos_req);
 
 	/* unregister the device */
 	input_unregister_device(info->input_dev);
