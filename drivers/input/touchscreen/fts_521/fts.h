@@ -163,6 +163,35 @@ do {\
 #define FTS_RESULT_PASS 2
 #define FTS_RESULT_FAIL 1
 
+/*CUR, DEFAULT, MIN, MAX*/
+#define VALUE_TYPE_SIZE 6
+#define VALUE_GRIP_SIZE 9
+enum MODE_CMD {
+	SET_CUR_VALUE = 0,
+	GET_CUR_VALUE,
+	GET_DEF_VALUE,
+	GET_MIN_VALUE,
+	GET_MAX_VALUE,
+	GET_MODE_VALUE,
+	RESET_MODE,
+};
+
+enum  MODE_TYPE {
+	Touch_Game_Mode        = 0,
+	Touch_Active_MODE      = 1,
+	Touch_UP_THRESHOLD     = 2,
+	Touch_Tolerance        = 3,
+	Touch_Wgh_Min          = 4,
+	Touch_Wgh_Max          = 5,
+	Touch_Wgh_Step         = 6,
+	Touch_Edge_Filter      = 7,
+	Touch_Panel_Orientation = 8,
+	Touch_Report_Rate      = 9,
+	Touch_Fod_Enable       = 10,
+	Touch_Aod_Enable       = 11,
+	Touch_Mode_NUM         = 14,
+};
+
 struct fts_config_info {
 	u8 tp_vendor;
 	u8 tp_color;
@@ -264,6 +293,7 @@ struct fts_dma_buf {
  */
 struct fts_ts_info {
 	struct device *dev;
+	int touch_mode[Touch_Mode_NUM][VALUE_TYPE_SIZE];
 #ifdef I2C_INTERFACE
 	struct i2c_client *client;
 #else

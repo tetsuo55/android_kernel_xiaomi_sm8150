@@ -2891,6 +2891,329 @@ static ssize_t fts_secure_touch_show (struct device *dev, struct device_attribut
 	return scnprintf(buf, PAGE_SIZE, "%d", value);
 }
 #endif
+struct fts_ts_info *info;
+static void fts_update_touchmode_data()
+{
+	bool update = false;
+	int i, j, ret = 0;
+	u8 set_cmd[9] = {0xc0, 0x05, 0,};
+	u8 get_cmd[2] = {0xc1, 0x05};
+	u8 get_value[7] = {0x0,};
+	int temp_value = 0;
+
+	ret = wait_event_interruptible_timeout(fts_info->wait_queue, !(fts_info->irq_status ||
+	fts_info->touch_id),  msecs_to_jiffies(500));
+
+	if (ret <= 0) {
+		logError(1, "%s %s: wait touch finger up timeout\n", tag, __func__);
+		return;
+	}
+	mutex_lock(&fts_info->cmd_update_mutex);
+
+	for (i = 0; i < Touch_Mode_NUM; i++) {
+		if (info->touch_mode[i][GET_CUR_VALUE] !=
+				info->touch_mode[i][SET_CUR_VALUE]) {
+
+			info->touch_mode[i][GET_CUR_VALUE] =
+				info->touch_mode[i][SET_CUR_VALUE];
+			logError(1, "%s %s: mode:%d changed, value:%d\n", tag, __func__, i,
+				info->touch_mode[i][SET_CUR_VALUE]);
+			update = true;
+		}
+	}
+
+	if (update) {
+		for (j = 2; j < sizeof(set_cmd) / sizeof(u8); j++) {
+			if (j - 2 == Touch_UP_THRESHOLD ||
+				j - 2 == Touch_Tolerance)
+				temp_value = info->touch_mode[j - 2][GET_MAX_VALUE] -
+					info->touch_mode[j - 2][GET_CUR_VALUE] +
+					info->touch_mode[j - 2][GET_MIN_VALUE];
+			else
+				temp_value = (info->touch_mode[j - 2][GET_CUR_VALUE]);
+
+			set_cmd[j] = (u8)temp_value;
+		}
+		logError(1,
+			"%s %s: write game:0x%x, 0x%x, %d, %d, %d, %d, %d, %d, %d\n",
+			tag, __func__, set_cmd[0], set_cmd[1], set_cmd[2], set_cmd[3],
+			set_cmd[4], set_cmd[5], set_cmd[6], set_cmd[7], set_cmd[8]);
+
+		ret = fts_write_dma_safe(set_cmd, sizeof(set_cmd) / sizeof(u8));
+		if (ret < OK) {
+			logError(1,
+				 "%s %s: error while writing touchmode data ERROR %08X\n",
+				 tag, __func__, ret);
+			goto end;
+		}
+
+		ret = fts_writeRead_dma_safe(get_cmd, sizeof(get_cmd) / sizeof(u8), get_value,
+					 sizeof(get_value) / sizeof(u8));
+		if (ret < OK) {
+			logError(1,
+				 "%s %s: error while reading touchmode data ERROR %08X\n",
+				 tag, __func__, ret);
+			goto end;
+		}
+
+		logError(1,
+			"%s %s: read game:%d, active_mode:%d, up_threshold:%d, landlock:%d, wgh:%d, %d, %d\n",
+			tag, __func__, get_value[0], get_value[1], get_value[2], get_value[3],
+			get_value[4], get_value[5], get_value[6]);
+	} else {
+		logError(1, "%s %s: no update\n", tag, __func__);
+	}
+
+end:
+	mutex_unlock(&fts_info->cmd_update_mutex);
+	return;
+}
+
+static void fts_cmd_update_work(struct work_struct *work)
+{
+	fts_update_touchmode_data();
+
+	return;
+}
+static int fts_set_cur_value(int mode, int value)
+{
+	
+	if (mode < Touch_Mode_NUM && mode >= 0) {
+
+		info->touch_mode[mode][SET_CUR_VALUE] = value;
+
+		if (info->touch_mode[mode][SET_CUR_VALUE] >
+			info->touch_mode[mode][GET_MAX_VALUE]) {
+
+			info->touch_mode[mode][SET_CUR_VALUE] =
+				info->touch_mode[mode][GET_MAX_VALUE];
+
+		} else if (info->touch_mode[mode][SET_CUR_VALUE] <
+			info->touch_mode[mode][GET_MIN_VALUE]) {
+
+		info->touch_mode[mode][SET_CUR_VALUE] =
+				info->touch_mode[mode][GET_MIN_VALUE];
+		}
+	} else {
+		logError(1, "%s %s, don't support\n", tag, __func__);
+	}
+	logError(1, "%s %s, mode:%d, value:%d\n", tag, __func__, mode, value);
+
+	queue_work(fts_info->touch_feature_wq, &fts_info->cmd_update_work);
+
+	return 0;
+}
+static void fts_init_touchmode_data()
+{
+	int i;
+
+	/* default value should equl the first initial value */
+	for (i = 0; i < Touch_Mode_NUM; i++) {
+		info->touch_mode[i][GET_DEF_VALUE] =
+			info->touch_mode[i][GET_CUR_VALUE];
+		info->touch_mode[i][SET_CUR_VALUE] =
+			info->touch_mode[i][GET_CUR_VALUE];
+	}
+	/* Touch Game Mode Switch */
+	info->touch_mode[Touch_Game_Mode][GET_MAX_VALUE] = 1;
+	info->touch_mode[Touch_Game_Mode][GET_MIN_VALUE] = 0;
+	info->touch_mode[Touch_Game_Mode][GET_DEF_VALUE] = 0;
+
+	/* Acitve Mode */
+	info->touch_mode[Touch_Active_MODE][GET_MAX_VALUE] = 1;
+	info->touch_mode[Touch_Active_MODE][GET_MIN_VALUE] = 0;
+	info->touch_mode[Touch_Active_MODE][GET_DEF_VALUE] = 0;
+
+	/* finger hysteresis */
+	info->touch_mode[Touch_UP_THRESHOLD][GET_DEF_VALUE] = 80;
+	info->touch_mode[Touch_UP_THRESHOLD][SET_CUR_VALUE] = 80;
+	info->touch_mode[Touch_UP_THRESHOLD][GET_CUR_VALUE] = 80;
+	info->touch_mode[Touch_UP_THRESHOLD][GET_MAX_VALUE] = 120;
+	info->touch_mode[Touch_UP_THRESHOLD][GET_MIN_VALUE] = 40;
+
+	/*  Tolerance */
+	info->touch_mode[Touch_Tolerance][GET_DEF_VALUE] = 25;
+	info->touch_mode[Touch_Tolerance][GET_MAX_VALUE] = 35;
+	info->touch_mode[Touch_Tolerance][GET_MIN_VALUE] = 5;
+	info->touch_mode[Touch_Tolerance][SET_CUR_VALUE] = 25;
+	info->touch_mode[Touch_Tolerance][GET_CUR_VALUE] = 25;
+
+	/*	Wgh Min */
+	info->touch_mode[Touch_Wgh_Min][GET_DEF_VALUE] = 1;
+	info->touch_mode[Touch_Wgh_Min][GET_CUR_VALUE] = 1;
+	info->touch_mode[Touch_Wgh_Min][SET_CUR_VALUE] = 1;
+	info->touch_mode[Touch_Wgh_Min][GET_MAX_VALUE] = 15;
+	info->touch_mode[Touch_Wgh_Min][GET_MIN_VALUE] = 0;
+
+	/*	Wgh Max */
+	info->touch_mode[Touch_Wgh_Max][GET_DEF_VALUE] = 5;
+	info->touch_mode[Touch_Wgh_Max][GET_CUR_VALUE] = 5;
+	info->touch_mode[Touch_Wgh_Max][SET_CUR_VALUE] = 5;
+	info->touch_mode[Touch_Wgh_Max][GET_MAX_VALUE] = 15;
+	info->touch_mode[Touch_Wgh_Max][GET_MIN_VALUE] = 0;
+
+	/*	Wgh Step */
+	info->touch_mode[Touch_Wgh_Step][GET_DEF_VALUE] = 1;
+	info->touch_mode[Touch_Wgh_Step][GET_CUR_VALUE] = 1;
+	info->touch_mode[Touch_Wgh_Step][SET_CUR_VALUE] = 1;
+	info->touch_mode[Touch_Wgh_Step][GET_MAX_VALUE] = 2;
+	info->touch_mode[Touch_Wgh_Step][GET_MIN_VALUE] = 0;
+
+	/*	edge filter */
+	info->touch_mode[Touch_Edge_Filter][GET_MAX_VALUE] = 3;
+	info->touch_mode[Touch_Edge_Filter][GET_MIN_VALUE] = 0;
+	info->touch_mode[Touch_Edge_Filter][GET_DEF_VALUE] = 2;
+	info->touch_mode[Touch_Edge_Filter][SET_CUR_VALUE] = 2;
+	info->touch_mode[Touch_Edge_Filter][GET_CUR_VALUE] = 2;
+
+	/*	Orientation */
+	info->touch_mode[Touch_Panel_Orientation][GET_MAX_VALUE] = 3;
+	info->touch_mode[Touch_Panel_Orientation][GET_MIN_VALUE] = 0;
+	info->touch_mode[Touch_Panel_Orientation][GET_DEF_VALUE] = 0;
+	info->touch_mode[Touch_Panel_Orientation][SET_CUR_VALUE] = 0;
+	info->touch_mode[Touch_Panel_Orientation][GET_CUR_VALUE] = 0;
+
+	for (i = 0; i < Touch_Mode_NUM; i++) {
+		logError(1,
+			 "%s %s: mode:%d, set cur:%d, get cur:%d, def:%d min:%d max:%d\n",
+			 tag, __func__,
+			i,
+			info->touch_mode[i][SET_CUR_VALUE],
+			info->touch_mode[i][GET_CUR_VALUE],
+			info->touch_mode[i][GET_DEF_VALUE],
+			info->touch_mode[i][GET_MIN_VALUE],
+			info->touch_mode[i][GET_MAX_VALUE]);
+	}
+
+	return;
+}
+static ssize_t fts_game_mode_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fts_ts_info *info = dev_get_drvdata(dev);
+
+	if (info == NULL)
+		return snprintf(buf, PAGE_SIZE, "error\n");
+
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+		info->touch_mode[Touch_Game_Mode][GET_CUR_VALUE]);
+}
+
+static ssize_t fts_game_mode_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int rc, i;
+	unsigned int u[Touch_Mode_NUM] = { 0 };
+
+	rc = sscanf(buf, "%d\n", &u[Touch_Game_Mode]);
+
+	if (rc != 4) {
+		return -EINVAL;
+	}
+
+	for (i = 0; i < Touch_Mode_NUM; i++)
+		fts_set_cur_value(i, u[i]);
+	return count;
+}
+static ssize_t fts_tolerance_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fts_ts_info *info = dev_get_drvdata(dev);
+
+	if (info == NULL)
+		return snprintf(buf, PAGE_SIZE, "error\n");
+
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+
+		info->touch_mode[Touch_Tolerance][GET_CUR_VALUE]);
+}
+
+static ssize_t fts_tolerance_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int rc, i;
+	unsigned int u[Touch_Mode_NUM] = { 0 };
+
+	
+
+	rc = sscanf(buf, "%d\n", &u[Touch_Tolerance]);
+
+	if (rc != 4) {
+	
+		return -EINVAL;
+	}
+
+	for (i = 0; i < Touch_Mode_NUM; i++)
+		fts_set_cur_value(i, u[i]);
+
+	return count;
+}
+static ssize_t fts_up_threshold_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fts_ts_info *info = dev_get_drvdata(dev);
+
+	if (info == NULL)
+		return snprintf(buf, PAGE_SIZE, "error\n");
+
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+		info->touch_mode[Touch_UP_THRESHOLD][GET_CUR_VALUE]);
+}
+
+static ssize_t fts_up_threshold_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int rc, i;
+	unsigned int u[Touch_Mode_NUM] = { 0 };
+
+	
+
+	rc = sscanf(buf, "%d\n", &u[Touch_UP_THRESHOLD]);
+
+	if (rc != 4) {
+	
+		return -EINVAL;
+	}
+
+	for (i = 0; i < Touch_Mode_NUM; i++)
+		fts_set_cur_value(i, u[i]);
+
+	return count;
+}
+static ssize_t fts_edge_filter_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fts_ts_info *info = dev_get_drvdata(dev);
+
+	if (info == NULL)
+		return snprintf(buf, PAGE_SIZE, "error\n");
+
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+		info->touch_mode[Touch_Edge_Filter][GET_CUR_VALUE]);
+}
+
+static ssize_t fts_edge_filter_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int rc, i;
+	unsigned int u[Touch_Mode_NUM] = { 0 };
+
+	
+
+	rc = sscanf(buf, "%d\n", &u[Touch_Edge_Filter]);
+
+	if (rc != 4) {
+	
+		return -EINVAL;
+	}
+
+	for (i = 0; i < Touch_Mode_NUM; i++)
+		fts_set_cur_value(i, u[i]);
+
+	return count;
+}
+
+
 static DEVICE_ATTR(fts_lockdown, (S_IRUGO | S_IWUSR | S_IWGRP),
 		   fts_lockdown_show, fts_lockdown_store);
 static DEVICE_ATTR(fwupdate, (S_IRUGO | S_IWUSR | S_IWGRP), fts_fwupdate_show,
@@ -2911,6 +3234,14 @@ static DEVICE_ATTR(ss_ix_total, (S_IRUGO), fts_ss_ix_total_show, NULL);
 static DEVICE_ATTR(ss_hover, (S_IRUGO), fts_hover_raw_show, NULL);
 static DEVICE_ATTR(stm_fts_cmd, (S_IRUGO | S_IWUSR | S_IWGRP), stm_fts_cmd_show,
 		   stm_fts_cmd_store);
+static DEVICE_ATTR(game_mode, 0664,
+		fts_game_mode_show, fts_game_mode_store);
+static DEVICE_ATTR(tolerance, 0664,
+		fts_tolerance_show, fts_tolerance_store);
+static DEVICE_ATTR(up_threshold, 0664,
+		fts_up_threshold_show, fts_up_threshold_store);
+static DEVICE_ATTR(edge_filter, 0664,
+		fts_edge_filter_show, fts_edge_filter_store);
 #ifdef USE_ONE_FILE_NODE
 static DEVICE_ATTR(feature_enable, (S_IRUGO | S_IWUSR | S_IWGRP),
 		   fts_feature_enable_show, fts_feature_enable_store);
@@ -3004,6 +3335,10 @@ static struct attribute *fts_attr_group[] = {
 	&dev_attr_doze_time.attr,
 	&dev_attr_grip_enable.attr,
 	&dev_attr_grip_area.attr,
+	&dev_attr_game_mode.attr,
+	&dev_attr_tolerance.attr,
+	&dev_attr_up_threshold.attr,
+	&dev_attr_edge_filter.attr,
 	NULL,
 };
 
@@ -6297,7 +6632,8 @@ static int fts_probe(struct spi_device *client)
 	queue_delayed_work(info->fwu_workqueue, &info->fwu_work,
 			   msecs_to_jiffies(EXP_FN_WORK_DELAY_MS));
 #endif
-
+	INIT_WORK(&info->cmd_update_work, fts_cmd_update_work);
+	fts_init_touchmode_data();
 	logError(1, "%s Probe Finished! \n", tag);
 	return OK;
 ProbeErrorExit_8:
