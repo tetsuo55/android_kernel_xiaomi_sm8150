@@ -63,7 +63,7 @@ static void thermal_throttle_worker(struct work_struct *work)
 	struct thermal_drv *t = container_of(to_delayed_work(work), typeof(*t),
 					     throttle_work);
 	struct thermal_zone *new_zone, *old_zone;
-	int temp = 0, temp_cpus_avg = 0, temp_batt = 0;
+	int temp = 0, temp_cpus_avg = 0, temp_batt = 0, temp_gpu = 0;
 	s64 temp_total = 0, temp_avg = 0;
 	short i = 0;
 
@@ -98,6 +98,12 @@ static void thermal_throttle_worker(struct work_struct *work)
 	if (temp_cpus_avg > 90000)
 		temp_avg = (temp_cpus_avg * 6 + temp_batt) / 7;
 
+	/* Checking GPU temperature */
+	thermal_zone_get_temp(thermal_zone_get_zone_by_name("gpuss-0-usr"), &temp_gpu);
+
+	if (temp_gpu >= 65000)
+		temp_avg = (temp_total + temp_gpu) / NR_CPUS;
+		
 	old_zone = t->curr_zone;
 	new_zone = NULL;
 
@@ -110,7 +116,7 @@ static void thermal_throttle_worker(struct work_struct *work)
 
 	/* Update thermal zone if it changed */
 	if (new_zone != old_zone) {
-		pr_debug("temp_avg: %i, batt: %i, cpus: %i\n", temp_avg, temp_batt, temp_cpus_avg);
+		pr_debug("temp_avg: %i, batt: %i, temp_gpu: %i\n,  cpus: %i\n", temp_avg, temp_batt, temp_cpus_avg, temp_gpu);
 		t->curr_zone = new_zone;
 		update_online_cpu_policy();
 	}
