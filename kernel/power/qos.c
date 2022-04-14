@@ -387,7 +387,7 @@ static int pm_qos_update_target_cpus(struct pm_qos_constraints *c,
 
 	curr_value = pm_qos_get_value(c);
 	pm_qos_set_value(c, curr_value);
-	ret = pm_qos_set_value_for_cpus(req, c, &cpus, new_cpus, action)
+	ret = pm_qos_set_value_for_cpus(req, c, &cpus, new_cpus, action);
 
 	spin_unlock(&pm_qos_lock);
 
@@ -408,6 +408,7 @@ static int pm_qos_update_target_cpus(struct pm_qos_constraints *c,
 		ret = 0;
 	}
 	return ret;
+}
 }
 
 /**
@@ -574,7 +575,7 @@ static void pm_qos_irq_release(struct kref *ref)
 }
 
 static void pm_qos_irq_notify(struct irq_affinity_notify *notify,
-		const cpumask_t *unused_mask)
+		const cpumask_t *mask)
 {
 	    struct pm_qos_request *req = container_of(notify,
 					struct pm_qos_request, irq_notify);
@@ -626,16 +627,9 @@ void pm_qos_add_request(struct pm_qos_request *req,
 			if (!desc)
 				return;
 
-			/*
-			 * If the IRQ is not started, the effective affinity
-			 * won't be set. So fallback to the default affinity.
-			 */
-			mask = irq_data_get_effective_affinity_mask(
-						&desc->irq_data);
-			if (cpumask_empty(mask))
-				mask = irq_data_get_affinity_mask(
-						&desc->irq_data);
-
+            mask = desc->irq_data.common->affinity;
+			
+			/* Get the current affinity */
 			atomic_set(&req->cpus_affine, *cpumask_bits(mask));
 			req->irq_notify.irq = req->irq;
 			req->irq_notify.notify = pm_qos_irq_notify;
