@@ -2288,7 +2288,6 @@ static struct ufs_hba_variant_ops ufs_hba_qcom_vops = {
 	.add_debugfs		= ufs_qcom_dbg_add_debugfs,
 #endif
 };
-};
 
 static struct ufs_hba_variant ufs_hba_qcom_variant = {
 	.name		= "qcom",

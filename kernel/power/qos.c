@@ -285,7 +285,7 @@ static inline int pm_qos_set_value_for_cpus(struct pm_qos_request *new_req,
 
 	if (c != pm_qos_array[PM_QOS_CPU_DMA_LATENCY]->constraints)
 		return -EINVAL;
-	
+
 	if (new_cpus) {
 		/* cpus_affine changed, so the old CPUs need to be refreshed */
 		new_req_cpus = new_req->cpus_affine | new_cpus;
@@ -308,7 +308,6 @@ static inline int pm_qos_set_value_for_cpus(struct pm_qos_request *new_req,
 			return 0;
 	}
 
-
 	plist_for_each_entry(req, &c->list, node) {
 		unsigned long affected_cpus;
 
@@ -324,7 +323,7 @@ static inline int pm_qos_set_value_for_cpus(struct pm_qos_request *new_req,
 		}
 
 		if (!(new_req_cpus &= ~affected_cpus))
-			return 0;		
+			return 0;
 	}
 
 	for_each_cpu(cpu, to_cpumask(&new_req_cpus)) {
@@ -337,23 +336,12 @@ static inline int pm_qos_set_value_for_cpus(struct pm_qos_request *new_req,
 	return 0;
 }
 
-/**
- * pm_qos_update_target - manages the constraints list and calls the notifiers
- *  if needed
- * @c: constraints data struct
- * @node: request to add to the list, to update or to remove
- * @action: action to take on the constraints list
- * @value: value of the request to add or update
- *
- * This function returns 1 if the aggregated constraint value has changed, 0
- *  otherwise.
- */
 static int pm_qos_update_target_cpus(struct pm_qos_constraints *c,
 				     struct plist_node *node,
 				     enum pm_qos_req_action action, int value,
 				     unsigned long new_cpus)
-{					 
-	struct pm_qos_request *req = container_of(node, typeof(*req), node);{
+{
+	struct pm_qos_request *req = container_of(node, typeof(*req), node);
 	int prev_value, curr_value, new_value;
 	unsigned long cpus = 0;
 	int ret;
@@ -408,7 +396,6 @@ static int pm_qos_update_target_cpus(struct pm_qos_constraints *c,
 		ret = 0;
 	}
 	return ret;
-}
 }
 
 /**
@@ -577,9 +564,9 @@ static void pm_qos_irq_release(struct kref *ref)
 static void pm_qos_irq_notify(struct irq_affinity_notify *notify,
 		const cpumask_t *mask)
 {
-	    struct pm_qos_request *req = container_of(notify,
+	struct pm_qos_request *req = container_of(notify,
 					struct pm_qos_request, irq_notify);
-	    struct pm_qos_constraints *c =
+	struct pm_qos_constraints *c =
 				pm_qos_array[req->pm_qos_class]->constraints;
 
 	pm_qos_update_target_cpus(c, &req->node, PM_QOS_UPDATE_REQ,
@@ -628,8 +615,8 @@ void pm_qos_add_request(struct pm_qos_request *req,
 			if (!desc)
 				return;
 
-            mask = desc->irq_data.common->affinity;
-			
+			mask = desc->irq_data.common->affinity;
+
 			/* Get the current affinity */
 			req->cpus_affine = *cpumask_bits(mask);
 			req->irq_notify.irq = req->irq;
@@ -860,6 +847,9 @@ static ssize_t pm_qos_power_write(struct file *filp, const char __user *buf,
 {
 	s32 value;
 	struct pm_qos_request *req;
+
+	/* Don't let userspace impose restrictions on CPU idle levels */
+	return count;
 
 	if (count == sizeof(s32)) {
 		if (copy_from_user(&value, buf, sizeof(s32)))
