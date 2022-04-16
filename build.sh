@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Adithya R.
 
 SECONDS=0 # builtin bash timer
-ZIPNAME="Origin-X3-S-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="Marisa-hax-S-$(date '+%Y%m%d-%H%M').zip"
 TC_DIR="$HOME/proton-clang"
 DEFCONFIG="raphael_defconfig"
 
@@ -39,7 +39,7 @@ dtbo="out/arch/arm64/boot/dtbo.img"
 
 if [ -f "$kernel" ] && [ -f "$dtb" ] && [ -f "$dtbo" ]; then
 	echo -e "\nKernel compiled succesfully! Zipping up...\n"
-	if ! git clone -q https://github.com/Patriot-06/AnyKernel3 -b x3; then
+	if ! git clone -q https://github.com/tetsuo55/AnyKernel3 -b x3; then
 		echo -e "\nCloning AnyKernel3 repo failed! Aborting..."
 		exit 1
 	fi
