@@ -67,8 +67,6 @@ static const struct of_device_id dsi_display_dt_match[] = {
 
 static unsigned int cur_refresh_rate = 60;
 
-static inline bool is_lp_mode(int power_mode)
-
 struct dsi_display *primary_display;
 struct dsi_display *get_primary_display(void)
 
