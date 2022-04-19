@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Adithya R.
 
 SECONDS=0 # builtin bash timer
-ZIPNAME="Marisa-hax-S-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="Steroid-$(date '+%Y%m%d-%H%M').zip"
 TC_DIR="$HOME/proton-clang"
 DEFCONFIG="raphael_defconfig"
 
