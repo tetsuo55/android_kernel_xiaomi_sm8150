@@ -1132,20 +1132,24 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 
 	mode->clk_rate_hz = !rc ? tmp64 : 0;
 	if (tmp64 == 1100000000 || tmp64 == 1103000000) {
-        if (framerate_override == 7)
-			mode->clk_rate_hz = 1650000000; // 90hz
+        if (framerate_override == 9)
+                        mode->clk_rate_hz = 1650000000; // 90hz
+                else if (framerate_override == 8)
+                        mode->clk_rate_hz = 1540000000; // 84hz
+                else if (framerate_override == 7)
+                        mode->clk_rate_hz = 1485000000; // 81hz
 		else if (framerate_override == 6)
-			mode->clk_rate_hz = 1540000000; // 84hz
-		else if (framerate_override == 5)
-			mode->clk_rate_hz = 1485000000; // 81hz
-		else if (framerate_override == 4)
-			mode->clk_rate_hz = 1375000000; // 75hz
-		else if (framerate_override == 3)
-			mode->clk_rate_hz = 1320000000; // 72hz
-		else if (framerate_override == 2)
-			mode->clk_rate_hz = 1265000000; // 69hz
-		else if (framerate_override == 1)
-			mode->clk_rate_hz = 1210000000; // 66hz
+			mode->clk_rate_hz = 1466666666; // 80hz
+                else if (framerate_override == 5)
+			mode->clk_rate_hz = 1430000000; // 78hz
+                else if (framerate_override == 4)
+                        mode->clk_rate_hz = 1375000000; // 75hz
+                else if (framerate_override == 3)
+                        mode->clk_rate_hz = 1320000000; // 72hz
+                else if (framerate_override == 2)
+                        mode->clk_rate_hz = 1265000000; // 69hz
+                else if (framerate_override == 1)
+                        mode->clk_rate_hz = 1210000000; // 66hz
 	}
 	display_mode->priv_info->clk_rate_hz = mode->clk_rate_hz;
 
@@ -1171,12 +1175,16 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		goto error;
 	}
 	if (mode->refresh_rate == 60) {
-        if (framerate_override == 7)
+        if (framerate_override == 9)
 			mode->refresh_rate = 90;
-		else if (framerate_override == 6)
+		else if (framerate_override == 8)
 			mode->refresh_rate = 84;
-		else if (framerate_override == 5)
+		else if (framerate_override == 7)
 			mode->refresh_rate = 81;
+                else if (framerate_override == 6)
+			mode->refresh_rate = 80
+		else if (framerate_override == 5)
+ 			mode->refresh_rate = 78
 		else if (framerate_override == 4)
 			mode->refresh_rate = 75;
 		else if (framerate_override == 3)
