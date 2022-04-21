@@ -1182,9 +1182,9 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		else if (framerate_override == 7)
 			mode->refresh_rate = 81;
                 else if (framerate_override == 6)
-			mode->refresh_rate = 80
+			mode->refresh_rate = 80;
 		else if (framerate_override == 5)
- 			mode->refresh_rate = 78
+ 			mode->refresh_rate = 78;
 		else if (framerate_override == 4)
 			mode->refresh_rate = 75;
 		else if (framerate_override == 3)
