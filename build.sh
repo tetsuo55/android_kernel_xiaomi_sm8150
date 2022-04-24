@@ -4,18 +4,35 @@
 
 SECONDS=0 # builtin bash timer
 ZIPNAME="Steroid-$(date '+%Y%m%d-%H%M').zip"
-TC_DIR="$HOME/proton-clang"
+TC_DIR="$HOME/clang-llvm"
+GCC_DIR="$HOME/gcc"
 DEFCONFIG="raphael_defconfig"
+ZIPNAME="Steroid--$(date '+%Y%m%d-%H%M').zip"
+export LD_LIBRARY_PATH=$TC_DIR/lib64:$LD_LIBRARY_PATH
+
+if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
+   head=$(git rev-parse --verify HEAD 2>/dev/null); then
+	ZIPNAME="${ZIPNAME::-4}-$(echo $head | cut -c1-8).zip"
+fi
 
 export PATH="$TC_DIR/bin:$PATH"
 
 if ! [ -d "$TC_DIR" ]; then
 	echo "Atom-X clang not found! Cloning to $TC_DIR..."
-	if ! git clone --depth=1 https://github.com/kdrag0n/proton-clang.git "$TC_DIR"; then
+	if ! git clone https://gitlab.com/reinazhard/aosp-clang.git --depth=1 --no-tags --single-branch "$TC_DIR"; then
 		echo "Cloning failed! Aborting..."
 		exit 1
 	fi
 fi
+
+if ! [ -d "$GCC_DIR" ]; then
+        echo "Atom-X clang not found! Cloning to $TC_DIR..."
+        if ! git clone https://android.googlesource.com/platform/prebuilts/gas/linux-x86/ -b master --depth=1 --single-branch --no-tags "$GCC_DIR"; then
+                echo "Cloning failed! Aborting..."
+                exit 1
+        fi
+fi
+
 
 if [[ $1 = "-r" || $1 = "--regen" ]]; then
 	make O=out ARCH=arm64 $DEFCONFIG savedefconfig
@@ -31,7 +48,7 @@ mkdir -p out
 make O=out ARCH=arm64 $DEFCONFIG
 
 echo -e "\nStarting compilation...\n"
-make -j$(nproc --all) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- Image.gz dtbo.img
+make -j$(nproc --all) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=$GCC_DIR/aarch64-linux-gnu- CROSS_COMPILE_ARM32=$GCC_DIR/arm-linux-gnueabi- Image.gz dtbo.img
 
 kernel="out/arch/arm64/boot/Image.gz"
 dtb="out/arch/arm64/boot/dts/qcom/sm8150-v2.dtb"
