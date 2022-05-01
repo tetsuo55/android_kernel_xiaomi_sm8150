@@ -48,20 +48,18 @@ mkdir -p out
 make O=out ARCH=arm64 $DEFCONFIG
 
 echo -e "\nStarting compilation...\n"
-make -j$(nproc --all) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=$GCC_DIR/aarch64-linux-gnu- CROSS_COMPILE_ARM32=$GCC_DIR/arm-linux-gnueabi- Image.gz dtbo.img
+make -j$(nproc --all) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=$GCC_DIR/aarch64-linux-gnu- CROSS_COMPILE_ARM32=$GCC_DIR/arm-linux-gnueabi- Image.gz-dtb dtbo.img
 
-kernel="out/arch/arm64/boot/Image.gz"
-dtb="out/arch/arm64/boot/dts/qcom/sm8150-v2.dtb"
+kernel="out/arch/arm64/boot/Image.gz-dtb"
 dtbo="out/arch/arm64/boot/dtbo.img"
 
-if [ -f "$kernel" ] && [ -f "$dtb" ] && [ -f "$dtbo" ]; then
+if [ -f "$kernel" ] && [ -f "$dtbo" ]; then
 	echo -e "\nKernel compiled succesfully! Zipping up...\n"
 	if ! git clone -q https://github.com/tetsuo55/AnyKernel3 -b x3; then
 		echo -e "\nCloning AnyKernel3 repo failed! Aborting..."
 		exit 1
 	fi
 	cp $kernel $dtbo AnyKernel3
-	cp $dtb AnyKernel3/dtb
 	rm -f *zip
 	cd AnyKernel3 || exit
 	rm -rf out/arch/arm64/boot
