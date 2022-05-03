@@ -351,5 +351,4 @@ int sde_encoder_in_cont_splash(struct drm_encoder *enc);
  */
 void sde_encoder_trigger_early_wakeup(struct drm_encoder *drm_enc);
 
->>>>>>> drm/msm/sde: use first vblank event to trigger early wakeup
 #endif /* __SDE_ENCODER_H__ */
