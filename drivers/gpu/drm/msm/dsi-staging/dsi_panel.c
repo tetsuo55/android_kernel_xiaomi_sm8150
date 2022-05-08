@@ -5731,7 +5731,11 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 			pr_info("FOD backlight restore last_bl_lvl=%d, doze_state=%d",
 				panel->last_bl_lvl, display->drm_dev->doze_state);
 			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DIMMINGOFF);
-			rc = dsi_panel_update_backlight(panel, panel->last_bl_lvl);
+			if (panel->dc_enable) {
+				rc = dsi_panel_update_backlight(panel, panel->dc_threshold);
+			} else {
+				rc = dsi_panel_update_backlight(panel, panel->last_bl_lvl);
+			}
 
 			if (display->drm_dev
 				&& ((display->drm_dev->doze_state == MSM_DRM_BLANK_LP1)
