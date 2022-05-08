@@ -955,9 +955,8 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		if (panel->fod_backlight_flag) {
 			pr_info("fod_backlight_flag set\n");
 		} else {
-			if (panel->f4_51_ctrl_flag &&
-				(panel->fod_hbm_enabled || (panel->thermal_hbm_disabled && bl_lvl > 2047) ||
-				(panel->hbm_enabled && !panel->thermal_hbm_disabled && !panel->hbm_brightness) ||panel->fod_dimlayer_hbm_enabled)) {
+			if ((panel->fod_hbm_enabled || (bl_lvl > 2047) ||
+				(panel->hbm_enabled && !panel->hbm_brightness) ||panel->fod_dimlayer_hbm_enabled)) {
 				pr_info("fod hbm on %d, hbm on %d, dimlayer hbm on %d, skip set backlight: %d\n",
 					panel->fod_hbm_enabled, panel->hbm_enabled, panel->fod_dimlayer_hbm_enabled, bl_lvl);
 			} else if((panel->oled_panel_video_mode && panel->in_aod && panel->doze_brightness != DOZE_BRIGHTNESS_INVALID)) {
@@ -5548,7 +5547,7 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		break;
 	case DISPPARAM_HBM_ON:
 		pr_info("hbm on\n");
-		if (!panel->fod_hbm_enabled && !panel->thermal_hbm_disabled)
+		if (!panel->fod_hbm_enabled)
 			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_ON);
 		panel->skip_dimmingon = STATE_DIM_BLOCK;
 		panel->hbm_enabled = true;
@@ -5627,29 +5626,9 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		break;
 	case DISPPARAM_HBM_OFF:
 		pr_info("hbm off\n");
-		if (!panel->fod_hbm_enabled) {
-			if (panel->f4_51_ctrl_flag) {
-				cmds = priv_info->cmd_sets[DSI_CMD_SET_DISP_HBM_OFF].cmds;
-				count = priv_info->cmd_sets[DSI_CMD_SET_DISP_HBM_OFF].count;
-				if (cmds && count >= panel->hbm_off_51_index) {
-					tx_buf = (u8 *)cmds[panel->hbm_off_51_index].msg.tx_buf;
-					if (tx_buf && tx_buf[0] == 0x51) {
-						tx_buf[1] = (panel->last_bl_lvl >> 8) & 0x07;
-						tx_buf[2] = panel->last_bl_lvl & 0xff;
-					}else {
-						if (tx_buf)
-							pr_err("tx_buf[0] = 0x%02X, check 0x51 index\n", tx_buf[0]);
-						else
-							pr_err("tx_buf is NULL pointer\n");
-					}
-				}else{
-					pr_err("0x51 index(%d) error\n", panel->hbm_off_51_index);
-				}
-			}
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_OFF);
-			panel->skip_dimmingon = STATE_DIM_RESTORE;
-		}
-			panel->hbm_enabled = false;
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_OFF);
+		panel->skip_dimmingon = STATE_DIM_RESTORE;
+		panel->hbm_enabled = false;
 		break;
 	case DISPPARAM_DC_ON:
 		pr_info("DC on\n");
@@ -5734,8 +5713,10 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		break;
 	case DISPPARAM_FOD_BACKLIGHT:
 		pr_info("FOD backlight");
-		if (panel->bl_config.dcs_type_ss) {
+		if (strnstr(panel->name, "ea8076", 20)) {
 			pr_info("FOD ea8076\n");
+		} else if (strnstr(panel->name, "r66456", 20)) {
+			pr_info("FOD r66456\n");
 			if (fod_backlight == 0x690)
 				fod_backlight = 4090;
 			else if (fod_backlight == 0x7FF)
