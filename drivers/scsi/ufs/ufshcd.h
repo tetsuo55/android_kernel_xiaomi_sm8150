@@ -1585,4 +1585,11 @@ static inline u8 ufshcd_scsi_to_upiu_lun(unsigned int scsi_lun)
 		return scsi_lun & UFS_UPIU_MAX_UNIT_NUM_ID;
 }
 
+static inline unsigned int ufshcd_vops_get_user_cap_mode(struct ufs_hba *hba)
+{
+	if (hba->var && hba->var->vops->get_user_cap_mode)
+		return hba->var->vops->get_user_cap_mode(hba);
+	return 0;
+}
+
 #endif /* End of Header */
