@@ -97,7 +97,7 @@ void dsi_display_panel_gamma_mode_change(struct dsi_display *display,
 
 	count = display->panel->cur_mode->priv_info->cmd_sets[DSI_CMD_SET_DISP_BC_120HZ].count;
 	if (!count) {
-		pr_info("No need to change panel gamma\n");
+		pr_debug("No need to change panel gamma\n");
 		return;
 	}
 
@@ -109,7 +109,7 @@ void dsi_display_panel_gamma_mode_change(struct dsi_display *display,
 	if (rc)
 		pr_err("%s: send cmds failed...", __func__);
 	else
-		pr_info("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
+		pr_debug("%s: refresh_rate[%d]\n", __func__, adj_mode->timing.refresh_rate);
 
 	return;
 }
@@ -285,7 +285,7 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 	if (rc)
 		pr_err("unable to set backlight\n");
 	else
-		pr_info("set backlight successfully at: bl_scale = %u, bl_scale_ad = %u, bl_lvl = %u\n", bl_scale, bl_scale_ad, (u32)bl_temp);
+		pr_debug("set backlight successfully at: bl_scale = %u, bl_scale_ad = %u, bl_lvl = %u\n", bl_scale, bl_scale_ad, (u32)bl_temp);
 
 	rc = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
 			DSI_CORE_CLK, DSI_CLK_OFF);
