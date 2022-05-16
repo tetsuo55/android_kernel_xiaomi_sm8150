@@ -84,22 +84,22 @@ static void thermal_throttle_worker(struct work_struct *work)
         thermal_zone_get_temp(thermal_zone_get_zone_by_name("gpuss-0-usr"), &temp_gpu);
 
  /* HQ autism coming up */
-        if ((temp_batt > 38000) || (temp_gpu > 68000)) {
+        if ((temp_batt > 38001) || (temp_gpu > 68001)) {
                 /* Battery is hot, go for CPU temps */
                 temp_avg = (temp_cpus_avg * 5 + temp_batt) / 6;
-                pr_info("temp_avg4: %i", temp_avg);
+		pr_info("temp_avg4: %i, batt: %i, temp_gpu: %i\n,  cpus: %i\n", temp_avg, temp_batt, temp_cpus_avg, temp_gpu);
         } else if ((temp_batt > 30000 && temp_batt <= 38000) || (temp_gpu > 65000 && temp_gpu <= 68000)) {
                 /* Getting even warmer, go even more towards CPU temps */
                 temp_avg = (temp_cpus_avg * 4 + temp_batt) / 5;
-                pr_info("temp_avg3: %i", temp_avg);
+                pr_info("temp_avg3: %i, batt: %i, temp_gpu: %i\n,  cpus: %i\n", temp_avg, temp_batt, temp_cpus_avg, temp_gpu);
         } else if ((temp_batt > 26000 && temp_batt <= 30000) || (temp_gpu > 63000 && temp_gpu <= 65000)) {
                 /* Getting warmer, start biasing towards CPU temps */
                 temp_avg = (temp_cpus_avg * 3 + temp_batt * 2) / 5;
-                pr_info("temp_avg2: %i", temp_avg);
+                pr_info("temp_avg2: %i, batt: %i, temp_gpu: %i\n,  cpus: %i\n", temp_avg, temp_batt, temp_cpus_avg, temp_gpu);
         } else if ((temp_batt <= 26000) || (temp_gpu <= 63000)) {
                 /* Battery is cool-ish, bias the temp towards it */
                 temp_avg = (temp_cpus_avg * 3 + temp_batt * 3) / 5;
-                pr_info("temp_avg2: %i", temp_avg);
+                pr_info("temp_avg1: %i, batt: %i, temp_gpu: %i\n,  cpus: %i\n", temp_avg, temp_batt, temp_cpus_avg, temp_gpu);
         }
 
 	/* Emergency case */
