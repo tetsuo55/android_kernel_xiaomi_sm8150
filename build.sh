@@ -6,6 +6,13 @@ SECONDS=0 # builtin bash timer
 ZIPNAME="Steroid-$(date '+%Y%m%d-%H%M').zip"
 TC_DIR="$HOME/proton-clang"
 DEFCONFIG="raphael_defconfig"
+ZIPNAME="Steroid--$(date '+%Y%m%d-%H%M').zip"
+export LD_LIBRARY_PATH=$TC_DIR/lib64:$LD_LIBRARY_PATH
+
+if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
+   head=$(git rev-parse --verify HEAD 2>/dev/null); then
+	ZIPNAME="${ZIPNAME::-4}-$(echo $head | cut -c1-8).zip"
+fi
 
 export PATH="$TC_DIR/bin:$PATH"
 
