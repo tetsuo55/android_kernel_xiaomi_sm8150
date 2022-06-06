@@ -8,6 +8,9 @@ TC_DIR="$HOME/proton-clang"
 DEFCONFIG="raphael_defconfig"
 ZIPNAME="Steroid--$(date '+%Y%m%d-%H%M').zip"
 export LD_LIBRARY_PATH=$TC_DIR/lib64:$LD_LIBRARY_PATH
+export USE_CCACHE=1
+export CCACHE_EXEC=/usr/bin/ccache
+ccache -M 50G
 
 if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
    head=$(git rev-parse --verify HEAD 2>/dev/null); then
