@@ -29,7 +29,7 @@ fi
 
 if [[ $1 = "-r" || $1 = "--regen" ]]; then
 	make O=out ARCH=arm64 $DEFCONFIG savedefconfig
-	cp out/defconfig arch/arm64/configs/$DEFCONFIG
+	cp out/.config arch/arm64/configs/$DEFCONFIG
 	exit
 fi
 
