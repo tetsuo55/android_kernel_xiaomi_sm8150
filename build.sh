@@ -4,10 +4,11 @@
 
 SECONDS=0 # builtin bash timer
 ZIPNAME="Steroid-$(date '+%Y%m%d-%H%M').zip"
-TC_DIR="$HOME/proton-clang"
+TC_DIR="$HOME/EVAGCC"
+32TC_DIR="$HOME/EVAGCC32"
 DEFCONFIG="raphael_defconfig"
 ZIPNAME="Steroid--$(date '+%Y%m%d-%H%M').zip"
-export LD_LIBRARY_PATH=$TC_DIR/lib64:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=$TC_DIR/lib64:$LD_LIBRARY_PATH
 export USE_CCACHE=1
 export CCACHE_EXEC=/usr/bin/ccache
 ccache -M 50G
@@ -17,14 +18,24 @@ if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
 	ZIPNAME="${ZIPNAME::-4}-$(echo $head | cut -c1-8).zip"
 fi
 
-export PATH="$TC_DIR/bin:$PATH"
+#export PATH="$TC_DIR/bin:$PATH"
+#export PATH="$32TC_DIR/bin:$PATH"
+export PATH=$32TC_DIR/bin:$TC_DIR/bin:/usr/bin/:${PATH}
 
 if ! [ -d "$TC_DIR" ]; then
 	echo "Atom-X clang not found! Cloning to $TC_DIR..."
-	if ! git clone --depth=1 https://github.com/kdrag0n/proton-clang.git "$TC_DIR"; then
+	if ! git clone --depth=1 https://github.com/cyberknight777/gcc-arm64.git "$TC_DIR"; then
 		echo "Cloning failed! Aborting..."
 		exit 1
 	fi
+fi
+
+if ! [ -d "$TC_DIR" ]; then
+        echo "Atom-X clang not found! Cloning to $TC_DIR..."
+        if ! git clone --depth=1 https://github.com/cyberknight777/gcc-arm.git "$32TC_DIR"; then
+                echo "Cloning failed! Aborting..."
+                exit 1
+        fi
 fi
 
 if [[ $1 = "-r" || $1 = "--regen" ]]; then
@@ -41,7 +52,19 @@ mkdir -p out
 make O=out ARCH=arm64 $DEFCONFIG
 
 echo -e "\nStarting compilation...\n"
-make -j$(nproc --all) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- Image.gz-dtb dtbo.img
+#make -j$(nproc --all) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- Image.gz-dtb dtbo.img
+   MAKE+=(
+        ARCH=arm64
+        O=out
+        CROSS_COMPILE=aarch64-elf-
+        CROSS_COMPILE_ARM32=arm-eabi-
+        LD=ld.lld
+        AR=llvm-ar
+        OBJDUMP=llvm-objdump
+        STRIP=llvm-strip
+        CC=aarch64-elf-gcc
+    )
+make -j7 "${MAKE[@]}" Image.gz-dtb dtbo.img
 
 kernel="out/arch/arm64/boot/Image.gz-dtb"
 dtbo="out/arch/arm64/boot/dtbo.img"
