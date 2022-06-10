@@ -5,7 +5,7 @@
 SECONDS=0 # builtin bash timer
 ZIPNAME="Steroid-$(date '+%Y%m%d-%H%M').zip"
 TC_DIR="$HOME/EVAGCC"
-32TC_DIR="$HOME/EVAGCC32"
+32TC_DIR="$HOME/EVAGCC_32"
 DEFCONFIG="raphael_defconfig"
 ZIPNAME="Steroid--$(date '+%Y%m%d-%H%M').zip"
 #export LD_LIBRARY_PATH=$TC_DIR/lib64:$LD_LIBRARY_PATH
@@ -30,7 +30,7 @@ if ! [ -d "$TC_DIR" ]; then
 	fi
 fi
 
-if ! [ -d "$TC_DIR" ]; then
+if ! [ -d "$32TC_DIR" ]; then
         echo "Atom-X clang not found! Cloning to $TC_DIR..."
         if ! git clone --depth=1 https://github.com/cyberknight777/gcc-arm.git "$32TC_DIR"; then
                 echo "Cloning failed! Aborting..."
