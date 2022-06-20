@@ -5,7 +5,7 @@
 SECONDS=0 # builtin bash timer
 ZIPNAME="Steroid-$(date '+%Y%m%d-%H%M').zip"
 TC_DIR="$HOME/EVAGCC"
-32TC_DIR="$HOME/EVAGCC_32"
+TC_DIR_32="$HOME/EVAGCC_32"
 DEFCONFIG="raphael_defconfig"
 ZIPNAME="Steroid--$(date '+%Y%m%d-%H%M').zip"
 #export LD_LIBRARY_PATH=$TC_DIR/lib64:$LD_LIBRARY_PATH
@@ -19,8 +19,8 @@ if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
 fi
 
 #export PATH="$TC_DIR/bin:$PATH"
-#export PATH="$32TC_DIR/bin:$PATH"
-export PATH=$32TC_DIR/bin:$TC_DIR/bin:/usr/bin/:${PATH}
+#export PATH="$TC_DIR_32/bin:$PATH"
+export PATH=$TC_DIR_32/bin:$TC_DIR/bin:/usr/bin/:${PATH}
 
 if ! [ -d "$TC_DIR" ]; then
 	echo "Atom-X clang not found! Cloning to $TC_DIR..."
@@ -30,9 +30,9 @@ if ! [ -d "$TC_DIR" ]; then
 	fi
 fi
 
-if ! [ -d "$32TC_DIR" ]; then
+if ! [ -d "$TC_DIR_32" ]; then
         echo "Atom-X clang not found! Cloning to $TC_DIR..."
-        if ! git clone --depth=1 https://github.com/cyberknight777/gcc-arm.git "$32TC_DIR"; then
+        if ! git clone --depth=1 https://github.com/cyberknight777/gcc-arm.git "$TC_DIR_32"; then
                 echo "Cloning failed! Aborting..."
                 exit 1
         fi
