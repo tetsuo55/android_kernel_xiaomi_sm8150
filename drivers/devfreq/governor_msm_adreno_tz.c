@@ -336,8 +336,8 @@ static inline int devfreq_get_freq_level(struct devfreq *devfreq,
 	return -EINVAL;
 }
 
-int highref_mulitplier_get = CONFIG_DEVFREQ_ADRENO_HIGHREFRESH_MULTI;
-module_param(highref_mulitplier_get, uint, 0644);
+int highref_multiplier_get = CONFIG_DEVFREQ_ADRENO_HIGHREFRESH_MULTI;
+module_param(highref_multiplier_get, uint, 0644);
 
 static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 {
