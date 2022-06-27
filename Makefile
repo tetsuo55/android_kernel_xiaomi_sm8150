@@ -423,7 +423,7 @@ LINUXINCLUDE    := \
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -pipe \
 		   -fno-strict-aliasing -fno-common -fshort-wchar \
-		   -Werror-implicit-function-declaration \
+		   #-Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -std=gnu89
 ifeq ($(TARGET_BOARD_TYPE),auto)
