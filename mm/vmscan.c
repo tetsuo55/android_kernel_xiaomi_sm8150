@@ -164,9 +164,7 @@ int vm_swappiness = 100;
  */
 int direct_vm_swappiness = 60;
 #endif /* CONFIG_OPLUS_MM_HACKS */
-#else
-int vm_swappiness = 190;
-#endif
+
 /*
  * The total number of pages which are beyond the high watermark within all
  * zones.
