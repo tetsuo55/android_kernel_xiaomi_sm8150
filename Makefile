@@ -718,7 +718,7 @@ ifdef CONFIG_CC_WERROR
 KBUILD_CFLAGS	+= -Werror
 endif
 
-GC_FLAGS += -O3 -mcpu=cortex-a76.cortex-a55+crypto+crc
+GC_FLAGS += -O3 -mcpu=cortex-a76.cortex-a55+crypto+crc+dotprod
 CL_FLAGS += -O3 -mcpu=cortex-a55+crypto+crc
 
 export GC_FLAGS
