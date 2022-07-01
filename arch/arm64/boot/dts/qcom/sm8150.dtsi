@@ -697,6 +697,7 @@
 			record-size = <0x80000>;
 			console-size = <0x400000>;
 			pmsg-size = <0x400000>;
+			ecc-size = <16>; 
 		};
 
 		adsp_mem: adsp_region {
