@@ -24,7 +24,7 @@ export PATH=$TC_DIR_32/bin:$TC_DIR/bin:/usr/bin/:${PATH}
 
 if ! [ -d "$TC_DIR" ]; then
 	echo "Atom-X clang not found! Cloning to $TC_DIR..."
-	if ! git clone --depth=1 https://github.com/cyberknight777/gcc-arm64.git "$TC_DIR"; then
+	if ! git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git "$TC_DIR"; then
 		echo "Cloning failed! Aborting..."
 		exit 1
 	fi
@@ -32,7 +32,7 @@ fi
 
 if ! [ -d "$TC_DIR_32" ]; then
         echo "Atom-X clang not found! Cloning to $TC_DIR..."
-        if ! git clone --depth=1 https://github.com/cyberknight777/gcc-arm.git "$TC_DIR_32"; then
+        if ! git clone --depth=1 https://github.com/mvaisakh/gcc-arm.git "$TC_DIR_32"; then
                 echo "Cloning failed! Aborting..."
                 exit 1
         fi
