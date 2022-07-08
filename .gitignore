@@ -130,3 +130,13 @@ kernel/configs/android-*.cfg
 #Ignoring Android.bp link file
 #
 Android.bp
+
+#ignore build directory (/out)
+out
+
+#ignore toolchain
+gcc32
+gcc64
+proton-clang
+proton-clang-master
+
