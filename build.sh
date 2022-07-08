@@ -20,7 +20,7 @@ fi
 
 #export PATH="$TC_DIR/bin:$PATH"
 #export PATH="$TC_DIR_32/bin:$PATH"
-export PATH=$TC_DIR_32/bin:$TC_DIR/bin:/usr/bin/:${PATH}
+export PATH=$TC_DIR/bin-ccache:$TC_DIR_32/bin-ccache:$TC_DIR_32/bin:$TC_DIR/bin:/usr/bin/:${PATH}
 
 if ! [ -d "$TC_DIR" ]; then
 	echo "Atom-X clang not found! Cloning to $TC_DIR..."
