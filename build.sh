@@ -62,7 +62,7 @@ echo -e "\nStarting compilation...\n"
         AR=llvm-ar
         OBJDUMP=llvm-objdump
         STRIP=llvm-strip
-        CC=aarch64-elf-gcc
+        CC="ccache aarch64-elf-gcc"
     )
 make -j7 "${MAKE[@]}" Image.gz-dtb dtbo.img
 
