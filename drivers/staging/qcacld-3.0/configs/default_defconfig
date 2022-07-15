@@ -478,17 +478,17 @@ ifneq ($(TARGET_BUILD_VARIANT),user)
 endif
 
 #Enable WLAN/Power debugfs feature only if debug_fs is enabled
-#ifeq ($(CONFIG_DEBUG_FS), y)
+ifeq ($(CONFIG_DEBUG_FS), y)
        # Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
        # configuration.
-#       CONFIG_WLAN_DEBUGFS := n
+       CONFIG_WLAN_DEBUGFS := y
 
        # Flag to enable streamfs. Depends on CONFIG_DEBUG_FS and
        # CONFIG_RELAY in kernel configuration.
-#ifeq ($(CONFIG_RELAY), y)
-#       CONFIG_WLAN_STREAMFS := y
-#endif
-#endif
+ifeq ($(CONFIG_RELAY), y)
+       CONFIG_WLAN_STREAMFS := y
+endif
+endif
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
        CONFIG_WLAN_MWS_INFO_DEBUGFS := y
@@ -1042,5 +1042,5 @@ CONFIG_WLAN_HANG_EVENT := n
 #Enable VDEV Response wakelock feature
 CONFIG_FEATURE_VDEV_RSP_WAKELOCK := y
 
-CONFIG_ENABLE_SIZE_OPTIMIZE := y
+CONFIG_ENABLE_SIZE_OPTIMIZE := n
 CONFIG_DISABLE_DEBUG_INFO := y

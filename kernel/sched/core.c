@@ -2248,6 +2248,7 @@ stat:
 out:
 	raw_spin_unlock_irqrestore(&p->pi_lock, flags);
 
+#ifdef CONFIG_SCHED_WALT
 	if (success && sched_predl) {
 		raw_spin_lock_irqsave(&cpu_rq(cpu)->lock, flags);
 		if (do_pl_notif(cpu_rq(cpu)))
@@ -2256,6 +2257,7 @@ out:
 					    SCHED_CPUFREQ_PL);
 		raw_spin_unlock_irqrestore(&cpu_rq(cpu)->lock, flags);
 	}
+#endif
 	return success;
 }
 
@@ -2900,6 +2902,7 @@ static struct rq *finish_task_switch(struct task_struct *prev)
 	 * to use.
 	 */
 	smp_mb__after_unlock_lock();
+	tick_nohz_task_switch();
 	finish_lock_switch(rq, prev);
 	finish_arch_post_lock_switch();
 	kcov_finish_switch(current);
@@ -2922,7 +2925,6 @@ static struct rq *finish_task_switch(struct task_struct *prev)
 			finish_task_switch_dead(prev);
 	}
 
-	tick_nohz_task_switch();
 	return rq;
 }
 
