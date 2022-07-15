@@ -66,6 +66,11 @@ echo -e "\nStarting compilation...\n"
     )
 make -j7 "${MAKE[@]}" Image.gz-dtb dtbo.img
 
+if [ $? -ne 0 ]; then
+	echo Kernel compilation failed!
+	exit
+fi
+
 kernel="out/arch/arm64/boot/Image.gz-dtb"
 dtbo="out/arch/arm64/boot/dtbo.img"
 
