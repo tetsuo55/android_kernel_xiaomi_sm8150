@@ -140,3 +140,17 @@ gcc64
 proton-clang
 proton-clang-master
 
+
+*.zip
+
+anykernel3
+
+build-clang.sh
+
+ld.lld
+
+log.txt
+
+main.sh
+
+scripts/dtc-aosp/dtc

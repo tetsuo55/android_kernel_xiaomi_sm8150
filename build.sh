@@ -20,7 +20,7 @@ fi
 
 #export PATH="$TC_DIR/bin:$PATH"
 #export PATH="$TC_DIR_32/bin:$PATH"
-export PATH=$TC_DIR_32/bin:$TC_DIR/bin:/usr/bin/:${PATH}
+export PATH=$TC_DIR/bin-ccache:$TC_DIR_32/bin-ccache:$TC_DIR_32/bin:$TC_DIR/bin:/usr/bin/:${PATH}
 
 if ! [ -d "$TC_DIR" ]; then
 	echo "Atom-X clang not found! Cloning to $TC_DIR..."
@@ -62,9 +62,14 @@ echo -e "\nStarting compilation...\n"
         AR=llvm-ar
         OBJDUMP=llvm-objdump
         STRIP=llvm-strip
-        CC="ccache aarch64-elf-gcc"
+        CC=aarch64-elf-gcc
     )
 make -j7 "${MAKE[@]}" Image.gz-dtb dtbo.img
+
+if [ $? -ne 0 ]; then
+	echo Kernel compilation failed!
+	exit
+fi
 
 kernel="out/arch/arm64/boot/Image.gz-dtb"
 dtbo="out/arch/arm64/boot/dtbo.img"
