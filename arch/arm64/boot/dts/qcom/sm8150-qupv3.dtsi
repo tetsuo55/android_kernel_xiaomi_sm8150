@@ -451,7 +451,6 @@
 				<&tlmm 46 0>;
 		qcom,wrapper-core = <&qupv3_2>;
 		qcom,wakeup-byte = <0xFD>;
-		qcom,auto-suspend-disable;
 		status = "disabled";
 	};
 
